@@ -8,6 +8,13 @@
 #include "libraries/Interval/interval.h"
 
 #define PIN_LED 13
+#define PIN_A 9
+#define PIN_B 10
+#define PIN_C 11
+#define PIN_D 12
+
+#define PIN_BUZZER 4
+#define PIN_CO2 A0
 
 
 Interval secInterval;
@@ -21,8 +28,31 @@ uint A_cyclesLimit, A_halfCycles;
 unsigned long A_set, A_sec;
 bool  A_out, A_outPin;
 
+uint8_t B_mode, B_state, B_init;
+uint B_onHour, B_onMin, B_onSec, B_offHour, B_offMin, B_offSec;
+uint B_cyclesLimit, B_halfCycles;
+unsigned long B_set, B_sec;
+bool  B_out, B_outPin;
+
+uint8_t C_mode, C_state, C_init;
+uint C_onHour, C_onMin, C_onSec, C_offHour, C_offMin, C_offSec;
+uint C_cyclesLimit, C_halfCycles;
+unsigned long C_set, C_sec;
+bool  C_out, C_outPin;
+
+uint8_t D_mode, D_state, D_init;
+uint D_onHour, D_onMin, D_onSec, D_offHour, D_offMin, D_offSec;
+uint D_cyclesLimit, D_halfCycles;
+unsigned long D_set, D_sec;
+bool  D_out, D_outPin;
+
 uint8_t uiPage;
 
+/*
+double co2;
+char text[16];
+char* text1 = "0123456789ABCDEF";
+*/
 
 #define LCD_I2CADDR 0x20
 const byte LCD_ROWS = 2;
@@ -40,6 +70,62 @@ char keys[KPD_ROWS][KPD_COLS] = {
   {'0','8','5','2'},
   {'*','7','4','1'}
 };
+
+class Alarm {
+	bool activated;
+	bool deactivated;
+	Interval activeInterval;
+	Interval deactiveInterval;
+
+public:
+	int alarmActiveDelay = 5000;
+	int alarmDeactiveDelay = 5000;
+	bool active;
+	bool unAck;
+
+	bool activate(bool state) {
+		if(state) {
+			if(!active) {
+				if(!activated) {
+					activated = true;
+					activeInterval.set(alarmActiveDelay);
+				}
+				if(activeInterval.expired()) {
+					activated = false;
+					active = true;
+					unAck = true;
+					return true;
+				}
+			}
+		}
+		else
+			activated = false;
+		return false;
+	};
+	bool deactivate(bool state) {
+		if(state){
+			if(active) {
+				if(!deactivated) {
+					deactivated = true;
+					deactiveInterval.set(alarmDeactiveDelay);
+				}
+				if(deactiveInterval.expired()) {
+					deactivated = false;
+					active = false;
+					return true;
+				}
+			}
+		}
+		else
+			deactivated = false;
+		return false;
+	}
+	void ack() {
+		unAck = false;
+	}
+};
+
+Alarm co2LowAlarm;
 
 class Keypad_I2C2 : public Keypad_I2C {
 	unsigned long kTime;
@@ -69,17 +155,17 @@ public:
     		if(bitMap[1] == 8) A_mode=2;
     		if(bitMap[0] == 8) A_mode=0;
 
-    		if(bitMap[2] == 4) A_mode=1;
-    		if(bitMap[1] == 4) A_mode=2;
-    		if(bitMap[0] == 4) A_mode=0;
+    		if(bitMap[2] == 4) B_mode=1;
+    		if(bitMap[1] == 4) B_mode=2;
+    		if(bitMap[0] == 4) B_mode=0;
 
-    		if(bitMap[2] == 2) A_mode=1;
-    		if(bitMap[1] == 2) A_mode=2;
-    		if(bitMap[0] == 2) A_mode=0;
+    		if(bitMap[2] == 2) C_mode=1;
+    		if(bitMap[1] == 2) C_mode=2;
+    		if(bitMap[0] == 2) C_mode=0;
 
-    		if(bitMap[2] == 1) A_mode=1;
-    		if(bitMap[1] == 1) A_mode=2;
-    		if(bitMap[0] == 1) A_mode=0;
+    		if(bitMap[2] == 1) D_mode=1;
+    		if(bitMap[1] == 1) D_mode=2;
+    		if(bitMap[0] == 1) D_mode=0;
     		//return NO_KEY;
     	}
     	if(bitMap[3] == 4) {
@@ -87,23 +173,23 @@ public:
     	    if(bitMap[1] == 8) A_stop();
     	    if(bitMap[0] == 8) A_restart();
 
-    	    if(bitMap[2] == 4) A_start();
-    	    if(bitMap[1] == 4) A_stop();
-    	    if(bitMap[0] == 4) A_restart();
+    	    if(bitMap[2] == 4) B_start();
+    	    if(bitMap[1] == 4) B_stop();
+    	    if(bitMap[0] == 4) B_restart();
 
-    	    if(bitMap[2] == 2) A_start();
-    	    if(bitMap[1] == 2) A_stop();
-    	    if(bitMap[0] == 2) A_restart();
+    	    if(bitMap[2] == 2) C_start();
+    	    if(bitMap[1] == 2) C_stop();
+    	    if(bitMap[0] == 2) C_restart();
 
-    	    if(bitMap[2] == 1) A_start();
-    	    if(bitMap[1] == 1) A_stop();
-    	    if(bitMap[0] == 1) A_restart();
+    	    if(bitMap[2] == 1) D_start();
+    	    if(bitMap[1] == 1) D_stop();
+    	    if(bitMap[0] == 1) D_restart();
     	    //return NO_KEY;
     	}
 
 
     	//Serial.println(kTime);
-    	// For menu system, makes delay between first and next
+    	// for menu system, makes delay between first and next
     	if(bitMap[0] || bitMap[1] || bitMap[2] || bitMap[3]) {
     		if(!kTime)
     			kTime = millis();
@@ -157,6 +243,7 @@ private:
 #define TEXT_STOP_ALL_EM 		"STOP ALL!"
 #define TEXT_RESTART_ALL_EM 	"RESTART ALL!"
 #define TEXT_RESETPARAM_EM 		"RESET SETTING!"
+#define TEXT_RESETTED			"RESETTED"
 
 #define TEXT_STARTED			"STARTED"
 #define TEXT_STOPPED			"STOPPED"
@@ -189,6 +276,8 @@ private:
 #define TEXT_A_OFFSEC			"A OFF:      [S]"
 #define TEXT_A_CYCLELIMIT		"A CYCLES LIMIT:"
 */
+#define TEXT_SETWIFIPASS		"WIFI PASSWORD:"
+
 
 //CZ
 #define TEXT_AUTO_EM			"AUTO!"
@@ -196,33 +285,41 @@ private:
 #define TEXT_ON_EM 				"ZAP!"
 #define TEXT_START_EM 			"STOP!"
 #define TEXT_STOP_EM 			"START!"
-#define TEXT_START_ALL_EM 		"START VSE!"
-#define TEXT_STOP_ALL_EM 		"STOP VSE!"
-#define TEXT_RESTART_ALL_EM 	"RESTART VSE!"
+#define TEXT_START_ALL_EM 		"START!"
+#define TEXT_STOP_ALL_EM 		"STOP!"
+#define TEXT_RESTART_ALL_EM 	"VYMAZAT CIT!"
 #define TEXT_RESETPARAM_EM 		"RESET NASTAVEN!"
+#define TEXT_RESETTED			"RESETOVANO"
 
-#define TEXT_STARTED			"STARTED"
-#define TEXT_STOPPED			"STOPPED"
-#define TEXT_RESTARTED			"RESTARTED"
-#define TEXT_OFF				"VYP "
-#define TEXT_ON 				"ZAP "
-#define TEXT_MAN 				"MAN  "
-#define TEXT_AUTO 				"AUTO "
+#define TEXT_PASSIVE			"PASIVNI"
+#define TEXT_ACTIVE				"AKTIVNI "
+#define TEXT_STARTED			"SPUSTENO"
+#define TEXT_STOPPED			"ZASTAVENO"
+#define TEXT_RESTARTED			"VYMAZANO"
+#define TEXT_OFF				"0 "
+#define TEXT_ON 				"1 "
+#define TEXT_MAN 				"MAN "
+#define TEXT_AUTO 				"AUT "
+#define TEXT_PAS				"VYP "
+#define TEXT_ACT				"ZAP "
 #define TEXT_STOP 				"STOP"
-#define TEXT_RUN 				"BEZI"
-#define TEXT_OFF2				"0 "
-#define TEXT_ON2 				"1 "
-#define TEXT_MAN2 				"M "
-#define TEXT_AUTO2 				"A "
-#define TEXT_STOP2 				"S "
-#define TEXT_RUN2 				"B "
+#define TEXT_RUN 				"CHOD"
+#define TEXT_OFF2				"0"
+#define TEXT_ON2 				"1"
+#define TEXT_MAN2 				"M"
+#define TEXT_AUTO2 				"A"
+#define TEXT_PAS2				"P"
+#define TEXT_ACT2				"A"
+#define TEXT_STOP2 				"STOP"
+#define TEXT_RUN2 				"CHOD"
 
+// A
 #define TEXT_A_ROOT				"A NASTAVENI->"
 #define TEXT_A_START_ALL_EM 	"A START!"
 #define TEXT_A_STOP_ALL_EM 		"A STOP!"
-#define TEXT_A_RESTART_ALL_EM 	"A RESTART!"
+#define TEXT_A_RESTART_ALL_EM 	"A VYMAZAT CIT!"
 #define TEXT_A_INIT				"A VYCHOZI:"
-#define TEXT_A_MODE				"A REZIM:"
+#define TEXT_A_MODE				"A STAV:"
 #define TEXT_A_ONHOUR			"A ZAP:    [HOD]"
 #define TEXT_A_ONMIN			"A ZAP:    [MIN]"
 #define TEXT_A_ONSEC			"A ZAP:    [SEC]"
@@ -231,7 +328,55 @@ private:
 #define TEXT_A_OFFSEC			"A VYP:	   [SEC]"
 #define TEXT_A_CYCLELIMIT		"A POCET CYKLU: "
 
+// B
+#define TEXT_B_ROOT				"B NASTAVENI->"
+#define TEXT_B_START_ALL_EM 	"B START!"
+#define TEXT_B_STOP_ALL_EM 		"B STOP!"
+#define TEXT_B_RESTART_ALL_EM 	"B VYMAZAT CIT!"
+#define TEXT_B_INIT				"B VYCHOZI:"
+#define TEXT_B_MODE				"B STAV:"
+#define TEXT_B_ONHOUR			"B ZAP:    [HOD]"
+#define TEXT_B_ONMIN			"B ZAP:    [MIN]"
+#define TEXT_B_ONSEC			"B ZAP:    [SEC]"
+#define TEXT_B_OFFHOUR			"B VYP:    [HOD]"
+#define TEXT_B_OFFMIN			"B VYP:    [MIN]"
+#define TEXT_B_OFFSEC			"B VYP:	   [SEC]"
+#define TEXT_B_CYCLELIMIT		"B POCET CYKLU: "
+
+// C
+#define TEXT_C_ROOT				"C NASTAVENI->"
+#define TEXT_C_START_ALL_EM 	"C START!"
+#define TEXT_C_STOP_ALL_EM 		"C STOP!"
+#define TEXT_C_RESTART_ALL_EM 	"C VYMAZAT CIT!"
+#define TEXT_C_INIT				"C VYCHOZI:"
+#define TEXT_C_MODE				"C STAV:"
+#define TEXT_C_ONHOUR			"C ZAP:    [HOD]"
+#define TEXT_C_ONMIN			"C ZAP:    [MIN]"
+#define TEXT_C_ONSEC			"C ZAP:    [SEC]"
+#define TEXT_C_OFFHOUR			"C VYP:    [HOD]"
+#define TEXT_C_OFFMIN			"C VYP:    [MIN]"
+#define TEXT_C_OFFSEC			"C VYP:	   [SEC]"
+#define TEXT_C_CYCLELIMIT		"C POCET CYKLU: "
+
+// D
+#define TEXT_D_ROOT				"D NASTAVENI->"
+#define TEXT_D_START_ALL_EM 	"D START!"
+#define TEXT_D_STOP_ALL_EM 		"D STOP!"
+#define TEXT_D_RESTART_ALL_EM 	"D VYMAZAT CIT!"
+#define TEXT_D_INIT				"D VYCHOZI:"
+#define TEXT_D_MODE				"D STAV:"
+#define TEXT_D_ONHOUR			"D ZAP:    [HOD]"
+#define TEXT_D_ONMIN			"D ZAP:    [MIN]"
+#define TEXT_D_ONSEC			"D ZAP:    [SEC]"
+#define TEXT_D_OFFHOUR			"D VYP:    [HOD]"
+#define TEXT_D_OFFMIN			"D VYP:    [MIN]"
+#define TEXT_D_OFFSEC			"D VYP:	   [SEC]"
+#define TEXT_D_CYCLELIMIT		"D POCET CYKLU: "
+
+
 //EEPROM
+
+// A
 #define ADDR_A_MODE 		20
 #define ADDR_A_INIT 		24
 #define ADDR_A_ONHOUR 		28
@@ -241,6 +386,43 @@ private:
 #define ADDR_A_OFFMIN 		44
 #define ADDR_A_OFFSEC 		48
 #define ADDR_A_CYCLESLIMIT	52
+#define ADDR_A_STATE 		56
+
+// B
+#define ADDR_B_MODE 		80
+#define ADDR_B_INIT 		84
+#define ADDR_B_ONHOUR 		88
+#define ADDR_B_ONMIN 		92
+#define ADDR_B_ONSEC 		96
+#define ADDR_B_OFFHOUR 		100
+#define ADDR_B_OFFMIN 		104
+#define ADDR_B_OFFSEC 		108
+#define ADDR_B_CYCLESLIMIT	112
+#define ADDR_B_STATE 		116
+
+// C
+#define ADDR_C_MODE 		140
+#define ADDR_C_INIT 		144
+#define ADDR_C_ONHOUR 		148
+#define ADDR_C_ONMIN 		152
+#define ADDR_C_ONSEC 		156
+#define ADDR_C_OFFHOUR 		160
+#define ADDR_C_OFFMIN 		164
+#define ADDR_C_OFFSEC 		168
+#define ADDR_C_CYCLESLIMIT	172
+#define ADDR_C_STATE 		176
+
+// D
+#define ADDR_D_MODE 		200
+#define ADDR_D_INIT 		204
+#define ADDR_D_ONHOUR 		208
+#define ADDR_D_ONMIN 		212
+#define ADDR_D_ONSEC 		216
+#define ADDR_D_OFFHOUR 		220
+#define ADDR_D_OFFMIN 		224
+#define ADDR_D_OFFSEC 		228
+#define ADDR_D_CYCLESLIMIT	232
+#define ADDR_D_STATE 		236
 
 
 // Create a list of states and values for a select input
@@ -252,8 +434,12 @@ MENU_SELECT_ITEM  sel_on  = { 2, {TEXT_ON_EM} };
 MENU_SELECT_ITEM  sel_stop= { 0, {TEXT_START_EM} };
 MENU_SELECT_ITEM  sel_start={ 1, {TEXT_STOP_EM} };
 
+MENU_SELECT_ITEM  sel_passive={ 0, {TEXT_PASSIVE} };
+MENU_SELECT_ITEM  sel_active= { 1, {TEXT_ACTIVE} };
+
 MENU_SELECT_LIST  const stateMode_list[] = { &sel_auto, &sel_off, &sel_on};
 MENU_SELECT_LIST  const stateOffOn_list[] = { &sel_off, &sel_on };
+MENU_SELECT_LIST  const statePasAct_list[] = { &sel_passive, &sel_active };
 //MENU_SELECT_LIST  const stateStopStart_list[] = { &sel_stop, &sel_start};
 
 MENU_ITEM X_start_item   = { {TEXT_START_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&X_uiStart) };
@@ -262,10 +448,15 @@ MENU_ITEM X_restart_item  ={ {TEXT_RESTART_ALL_EM},  ITEM_ACTION, 0,        MENU
 
 MENU_ITEM reset_item  ={ {TEXT_RESETPARAM_EM},  ITEM_ACTION, 0,        MENU_TARGET(&uiResetParam) };
 
+//MENU_ITEM setWifiPass_item  ={ {TEXT_SETWIFIPASS},  ITEM_ACTION, 0,        MENU_TARGET(&uiSetWifiPass) };
+
 //MENU_SELECT A_state_select = { &A_state,           MENU_SELECT_SIZE(stateStopStart_list),   MENU_TARGET(&stateStopStart_list) };
 //MENU_VALUE A_state_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&A_state_select), 0};
 //MENU_ITEM A_state_item    =  { {"A STATE:"}, ITEM_VALUE,  0,        MENU_TARGET(&A_state_value) };
 
+////////////////////////////////////////
+// A
+////////////////////////////////////////
 MENU_SELECT A_init_select = { &A_init,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
 MENU_VALUE A_init_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&A_init_select), ADDR_A_INIT};
 MENU_ITEM A_init_item    =  { {TEXT_A_INIT}, ITEM_VALUE,  0,        MENU_TARGET(&A_init_value)};
@@ -277,6 +468,10 @@ MENU_ITEM A_restart_item = { {TEXT_A_RESTART_ALL_EM},  ITEM_ACTION, 0,        ME
 MENU_SELECT A_mode_select = { &A_mode,           MENU_SELECT_SIZE(stateMode_list),   MENU_TARGET(&stateMode_list) };
 MENU_VALUE A_mode_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&A_mode_select), ADDR_A_MODE};
 MENU_ITEM A_mode_item    =  { {TEXT_A_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&A_mode_value) };
+
+MENU_SELECT A_state_select = { &A_state,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE A_state_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&A_state_select), ADDR_A_STATE};
+MENU_ITEM A_state_item    =  { {TEXT_A_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&A_state_value) };
 //                               TYPE             MAX    MIN    TARGET
 MENU_VALUE A_onHour_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&A_onHour), ADDR_A_ONHOUR};
 MENU_VALUE A_onMin_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&A_onMin), ADDR_A_ONMIN};
@@ -291,15 +486,136 @@ MENU_ITEM A_onHour_item   = { {TEXT_A_ONHOUR},   ITEM_VALUE,  0,        MENU_TAR
 MENU_ITEM A_onMin_item   =  { {TEXT_A_ONMIN},   ITEM_VALUE,  0,        MENU_TARGET(&A_onMin_value)  };
 MENU_ITEM A_onSec_item   =  { {TEXT_A_ONSEC},   ITEM_VALUE,  0,        MENU_TARGET(&A_onSec_value)  };
 MENU_ITEM A_offHour_item  = { {TEXT_A_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&A_offHour_value)};
-MENU_ITEM A_offMin_item   = { {TEXT_A_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&A_offMin_value) };
-MENU_ITEM A_offSec_item   = { {TEXT_A_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&A_offSec_value) };
+MENU_ITEM A_offMin_item   = { {TEXT_A_OFFMIN},   ITEM_VALUE,  0,        MENU_TARGET(&A_offMin_value) };
+MENU_ITEM A_offSec_item   = { {TEXT_A_OFFSEC},   ITEM_VALUE,  0,        MENU_TARGET(&A_offSec_value) };
 MENU_ITEM A_cyclesLimit_item   = { {TEXT_A_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&A_cyclesLimit_value) };
 
-MENU_LIST const A_submenu_list[] = { &A_start_item, &A_stop_item, &A_restart_item, &A_init_item, &A_cyclesLimit_item, &A_onSec_item,&A_onMin_item, &A_onHour_item, &A_offSec_item,&A_offMin_item, &A_offHour_item, &A_mode_item};
+MENU_LIST const A_submenu_list[] = { &A_state_item, &A_init_item, &A_cyclesLimit_item, &A_restart_item, &A_onSec_item,&A_onMin_item, &A_onHour_item, &A_offSec_item,&A_offMin_item, &A_offHour_item, &A_mode_item}; //&A_start_item, &A_stop_item,
 MENU_ITEM A_menu_submenu = { {TEXT_A_ROOT},  ITEM_MENU,  MENU_SIZE(A_submenu_list),  MENU_TARGET(&A_submenu_list) };
 
+////////////////////////////////////////
+// B
+////////////////////////////////////////
+MENU_SELECT B_init_select = { &B_init,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE B_init_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&B_init_select), ADDR_B_INIT};
+MENU_ITEM B_init_item    =  { {TEXT_B_INIT}, ITEM_VALUE,  0,        MENU_TARGET(&B_init_value)};
 
-MENU_LIST const root_list[]   = { &X_start_item, &X_stop_item, &X_restart_item, &A_menu_submenu, &reset_item };
+MENU_ITEM B_start_item   = { {TEXT_B_START_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&B_uiStart) };
+MENU_ITEM B_stop_item    = { {TEXT_B_STOP_ALL_EM },  ITEM_ACTION, 0,        MENU_TARGET(&B_uiStop) };
+MENU_ITEM B_restart_item = { {TEXT_B_RESTART_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&B_uiRestart) };
+
+MENU_SELECT B_mode_select = { &B_mode,           MENU_SELECT_SIZE(stateMode_list),   MENU_TARGET(&stateMode_list) };
+MENU_VALUE B_mode_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&B_mode_select), ADDR_B_MODE};
+MENU_ITEM B_mode_item    =  { {TEXT_B_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&B_mode_value) };
+
+MENU_SELECT B_state_select = { &B_state,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE B_state_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&B_state_select), ADDR_B_STATE};
+MENU_ITEM B_state_item    =  { {TEXT_B_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&B_state_value) };
+//                               TYPE             MAX    MIN    TARGET
+MENU_VALUE B_onHour_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_onHour), ADDR_B_ONHOUR};
+MENU_VALUE B_onMin_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&B_onMin), ADDR_B_ONMIN};
+MENU_VALUE B_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&B_onSec), ADDR_B_ONSEC};
+MENU_VALUE B_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&B_offHour), ADDR_B_OFFHOUR};
+MENU_VALUE B_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_offMin), ADDR_B_OFFMIN};
+MENU_VALUE B_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_offSec), ADDR_B_OFFSEC};
+MENU_VALUE B_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_cyclesLimit), ADDR_B_CYCLESLIMIT};
+
+//                                "123456789ABCDEF"
+MENU_ITEM B_onHour_item   = { {TEXT_B_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&B_onHour_value) };
+MENU_ITEM B_onMin_item   =  { {TEXT_B_ONMIN},   ITEM_VALUE,  0,        MENU_TARGET(&B_onMin_value)  };
+MENU_ITEM B_onSec_item   =  { {TEXT_B_ONSEC},   ITEM_VALUE,  0,        MENU_TARGET(&B_onSec_value)  };
+MENU_ITEM B_offHour_item  = { {TEXT_B_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&B_offHour_value)};
+MENU_ITEM B_offMin_item   = { {TEXT_B_OFFMIN},   ITEM_VALUE,  0,        MENU_TARGET(&B_offMin_value) };
+MENU_ITEM B_offSec_item   = { {TEXT_B_OFFSEC},   ITEM_VALUE,  0,        MENU_TARGET(&B_offSec_value) };
+MENU_ITEM B_cyclesLimit_item   = { {TEXT_B_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&B_cyclesLimit_value) };
+
+MENU_LIST const B_submenu_list[] = { &B_state_item, &B_init_item, &B_cyclesLimit_item, &B_restart_item, &B_onSec_item,&B_onMin_item, &B_onHour_item, &B_offSec_item,&B_offMin_item, &B_offHour_item, &B_mode_item}; //&B_start_item, &B_stop_item,
+MENU_ITEM B_menu_submenu = { {TEXT_B_ROOT},  ITEM_MENU,  MENU_SIZE(B_submenu_list),  MENU_TARGET(&B_submenu_list) };
+
+////////////////////////////////////////
+// C
+////////////////////////////////////////
+MENU_SELECT C_init_select = { &C_init,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE C_init_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&C_init_select), ADDR_C_INIT};
+MENU_ITEM C_init_item    =  { {TEXT_C_INIT}, ITEM_VALUE,  0,        MENU_TARGET(&C_init_value)};
+
+MENU_ITEM C_start_item   = { {TEXT_C_START_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&C_uiStart) };
+MENU_ITEM C_stop_item    = { {TEXT_C_STOP_ALL_EM },  ITEM_ACTION, 0,        MENU_TARGET(&C_uiStop) };
+MENU_ITEM C_restart_item = { {TEXT_C_RESTART_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&C_uiRestart) };
+
+MENU_SELECT C_mode_select = { &C_mode,           MENU_SELECT_SIZE(stateMode_list),   MENU_TARGET(&stateMode_list) };
+MENU_VALUE C_mode_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&C_mode_select), ADDR_C_MODE};
+MENU_ITEM C_mode_item    =  { {TEXT_C_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&C_mode_value) };
+
+MENU_SELECT C_state_select = { &C_state,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE C_state_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&C_state_select), ADDR_C_STATE};
+MENU_ITEM C_state_item    =  { {TEXT_C_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&C_state_value) };
+//                               TYPE             MAX    MIN    TARGET
+MENU_VALUE C_onHour_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_onHour), ADDR_C_ONHOUR};
+MENU_VALUE C_onMin_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&C_onMin), ADDR_C_ONMIN};
+MENU_VALUE C_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&C_onSec), ADDR_C_ONSEC};
+MENU_VALUE C_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&C_offHour), ADDR_C_OFFHOUR};
+MENU_VALUE C_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_offMin), ADDR_C_OFFMIN};
+MENU_VALUE C_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_offSec), ADDR_C_OFFSEC};
+MENU_VALUE C_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_cyclesLimit), ADDR_C_CYCLESLIMIT};
+
+//                                "123456789ABCDEF"
+MENU_ITEM C_onHour_item   = { {TEXT_C_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&C_onHour_value) };
+MENU_ITEM C_onMin_item   =  { {TEXT_C_ONMIN},   ITEM_VALUE,  0,        MENU_TARGET(&C_onMin_value)  };
+MENU_ITEM C_onSec_item   =  { {TEXT_C_ONSEC},   ITEM_VALUE,  0,        MENU_TARGET(&C_onSec_value)  };
+MENU_ITEM C_offHour_item  = { {TEXT_C_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&C_offHour_value)};
+MENU_ITEM C_offMin_item   = { {TEXT_C_OFFMIN},   ITEM_VALUE,  0,        MENU_TARGET(&C_offMin_value) };
+MENU_ITEM C_offSec_item   = { {TEXT_C_OFFSEC},   ITEM_VALUE,  0,        MENU_TARGET(&C_offSec_value) };
+MENU_ITEM C_cyclesLimit_item   = { {TEXT_C_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&C_cyclesLimit_value) };
+
+MENU_LIST const C_submenu_list[] = { &C_state_item, &C_init_item, &C_cyclesLimit_item, &C_restart_item, &C_onSec_item,&C_onMin_item, &C_onHour_item, &C_offSec_item,&C_offMin_item, &C_offHour_item, &C_mode_item}; //&C_start_item, &C_stop_item,
+MENU_ITEM C_menu_submenu = { {TEXT_C_ROOT},  ITEM_MENU,  MENU_SIZE(C_submenu_list),  MENU_TARGET(&C_submenu_list) };
+
+////////////////////////////////////////
+// D
+////////////////////////////////////////
+MENU_SELECT D_init_select = { &D_init,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE D_init_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&D_init_select), ADDR_D_INIT};
+MENU_ITEM D_init_item    =  { {TEXT_D_INIT}, ITEM_VALUE,  0,        MENU_TARGET(&D_init_value)};
+
+MENU_ITEM D_start_item   = { {TEXT_D_START_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&D_uiStart) };
+MENU_ITEM D_stop_item    = { {TEXT_D_STOP_ALL_EM },  ITEM_ACTION, 0,        MENU_TARGET(&D_uiStop) };
+MENU_ITEM D_restart_item = { {TEXT_D_RESTART_ALL_EM},  ITEM_ACTION, 0,        MENU_TARGET(&D_uiRestart) };
+
+MENU_SELECT D_mode_select = { &D_mode,           MENU_SELECT_SIZE(stateMode_list),   MENU_TARGET(&stateMode_list) };
+MENU_VALUE D_mode_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&D_mode_select), ADDR_D_MODE};
+MENU_ITEM D_mode_item    =  { {TEXT_D_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&D_mode_value) };
+
+MENU_SELECT D_state_select = { &D_state,           MENU_SELECT_SIZE(stateOffOn_list),   MENU_TARGET(&stateOffOn_list) };
+MENU_VALUE D_state_value =   { TYPE_SELECT,     0,     0,     MENU_TARGET(&D_state_select), ADDR_D_STATE};
+MENU_ITEM D_state_item    =  { {TEXT_D_MODE}, ITEM_VALUE,  0,        MENU_TARGET(&D_state_value) };
+//                               TYPE             MAX    MIN    TARGET
+MENU_VALUE D_onHour_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_onHour), ADDR_D_ONHOUR};
+MENU_VALUE D_onMin_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&D_onMin), ADDR_D_ONMIN};
+MENU_VALUE D_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&D_onSec), ADDR_D_ONSEC};
+MENU_VALUE D_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&D_offHour), ADDR_D_OFFHOUR};
+MENU_VALUE D_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_offMin), ADDR_D_OFFMIN};
+MENU_VALUE D_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_offSec), ADDR_D_OFFSEC};
+MENU_VALUE D_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_cyclesLimit), ADDR_D_CYCLESLIMIT};
+
+//                                "123456789ABCDEF"
+MENU_ITEM D_onHour_item   = { {TEXT_D_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&D_onHour_value) };
+MENU_ITEM D_onMin_item   =  { {TEXT_D_ONMIN},   ITEM_VALUE,  0,        MENU_TARGET(&D_onMin_value)  };
+MENU_ITEM D_onSec_item   =  { {TEXT_D_ONSEC},   ITEM_VALUE,  0,        MENU_TARGET(&D_onSec_value)  };
+MENU_ITEM D_offHour_item  = { {TEXT_D_OFFHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&D_offHour_value)};
+MENU_ITEM D_offMin_item   = { {TEXT_D_OFFMIN},   ITEM_VALUE,  0,        MENU_TARGET(&D_offMin_value) };
+MENU_ITEM D_offSec_item   = { {TEXT_D_OFFSEC},   ITEM_VALUE,  0,        MENU_TARGET(&D_offSec_value) };
+MENU_ITEM D_cyclesLimit_item   = { {TEXT_D_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&D_cyclesLimit_value) };
+
+MENU_LIST const D_submenu_list[] = { &D_state_item, &D_init_item, &D_cyclesLimit_item, &D_restart_item, &D_onSec_item,&D_onMin_item, &D_onHour_item, &D_offSec_item,&D_offMin_item, &D_offHour_item, &D_mode_item}; //&D_start_item, &D_stop_item,
+MENU_ITEM D_menu_submenu = { {TEXT_D_ROOT},  ITEM_MENU,  MENU_SIZE(D_submenu_list),  MENU_TARGET(&D_submenu_list) };
+
+
+
+
+
+
+MENU_LIST const root_list[]   = { &X_start_item, &X_stop_item, &X_restart_item, &A_menu_submenu, &B_menu_submenu, &C_menu_submenu, &D_menu_submenu, &reset_item };
 MENU_ITEM menu_root     = { {"ROOT"},        ITEM_MENU,   MENU_SIZE(root_list),    MENU_TARGET(&root_list) };
 
 OMMenuMgr2 Menu(&menu_root, MENU_DIGITAL, &kpd);
@@ -324,9 +640,16 @@ void uiInstrument(char* name, bool out, uint8_t mode, uint8_t state, unsigned lo
 	if(detail)
 		lcd.setCursor(0, 0);
 	lcd.print(name);
+	if(!detail)
+		if(secCnt & 1)
+			lcd.print(':');
+		else
+			lcd.print(' ');
+
 
 	if(detail) {
-		if(A_outPin)
+		//if(A_outPin)
+		if(out)
 			lcd.print(F(TEXT_ON));
 		else
 			lcd.print(F(TEXT_OFF));
@@ -335,90 +658,170 @@ void uiInstrument(char* name, bool out, uint8_t mode, uint8_t state, unsigned lo
 		else
 			lcd.print(F(TEXT_AUTO));
 		if(state)
+			lcd.print(F(TEXT_ACT));
+		else
+			lcd.print(F(TEXT_PAS));
+		if(X_state)
 			lcd.print(F(TEXT_RUN));
 		else
 			lcd.print(F(TEXT_STOP));
 	}
 	else {
-		if(A_outPin)
+		//if(A_outPin)
+		if(out)
 			lcd.print(F(TEXT_ON2));
 		else
 			lcd.print(F(TEXT_OFF2));
+		if(!mode && state && X_state)
+			lcd.print(F(TEXT_RUN2));
+		else
+			lcd.print(F(TEXT_STOP2));
+
+		/*
 		if(mode)
 			lcd.print(F(TEXT_MAN2));
 		else
 			lcd.print(F(TEXT_AUTO2));
-		/*if(state)
-			lcd.print(F("R"));
+		if(state)
+			lcd.print(F(TEXT_ACT2));
 		else
-			lcd.print(F("S"));*/
+			lcd.print(F(TEXT_PAS2));
+		if(X_state)
+			lcd.print(F(TEXT_RUN2));
+		else
+			lcd.print(F(TEXT_STOP2));
+		*/
 	}
-
-	if(state) {
+	/*
+	if(state && X_state) {
 		if(secCnt & 1)
 			lcd.print('-');
 		else
 			lcd.print('|');
-		/*
-		uint8_t cnt = secCnt & 3;
-		if(cnt == 0) lcd.print('-');
-		if(cnt == 1) lcd.print('/');
-		if(cnt == 2) lcd.print('|');
-		if(cnt == 3) lcd.print("\\");
-		*/
+
+		//uint8_t cnt = secCnt & 3;
+		//if(cnt == 0) lcd.print('-');
+		//if(cnt == 1) lcd.print('/');
+		//if(cnt == 2) lcd.print('|');
+		//if(cnt == 3) lcd.print("\\");
+
 	}
 	else
 		if(secCnt & 1)
 			lcd.print('-');
 		else
 			lcd.print(' ');
-
+	*/
 	if(detail) {
 		lcd.setCursor(0, 1);
 		lcd.print(cycles);
-		lcd.print('/');
+
+		if(secCnt & 1)
+			lcd.print(':');
+		else
+			lcd.print(' ');
+
 		lcd.print(cyclesLimit);
 		uiLcdPrintSpaces8();
 		uiLcdPrintSpaces8();
 	}
 }
 
+//TODO
+uint8_t uiState;
+enum {UISTATE_MAIN, UISTATE_EDITTEXT };
+
+char uiChar;
+bool uiMenuBlocked;
+//
+
 void uiMain() {
+
 	Menu.enable(false);
 
-	if(uiPage==0) {
-		//lcd.setCursor(0, 0);
-		//lcd.print("-");
-		//uiLcdPrintSpaces8();
-		//uiLcdPrintSpaces8();
-		lcd.setCursor(0, 0);
-		uiInstrument("A:", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
-		lcd.print(F("  "));
-		uiInstrument("B:", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
-
-		lcd.setCursor(0, 1);
-		uiInstrument("C:", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
-		lcd.print(F("  "));
-		uiInstrument("D:", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
+	if(co2LowAlarm.unAck) {
+		(secCnt & 1) ? lcd.backlight() : lcd.noBacklight();
 	}
-	else if(uiPage==1)
-		uiInstrument("A ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
-	else if(uiPage==2)
-		uiInstrument("B ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
-	else if(uiPage==3)
-		uiInstrument("C ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
-	else if(uiPage==4)
-		uiInstrument("D ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
-	else if(uiPage==5) {
-		lcd.setCursor(0, 0);
-		lcd.print(F("EMAIL   "));
-		lcd.print(F("BCSEDLON@"));
-		lcd.setCursor(0, 1);
-		uiLcdPrintSpaces8();
-		lcd.setCursor(7, 1);
-		lcd.print(F("GMAIL.COM"));
+	else {
+		lcd.backlight();
 	}
 
+	if(uiState == UISTATE_MAIN) {
+
+		if(uiChar =='A') //KPD_UP)
+			uiPage--;
+		if(uiChar == 'B') //KPD_DOWN)
+			uiPage++;
+		if(uiChar == '#') //KPD_DOWN)
+			uiPage = 0;
+
+		uiPage = max(0, uiPage);
+		uiPage = min(5, uiPage);
+
+		if(uiPage==0) {
+			//lcd.setCursor(0, 0);
+			//lcd.print("-");
+			//uiLcdPrintSpaces8();
+			//uiLcdPrintSpaces8();
+			lcd.setCursor(0, 0);
+			uiInstrument("A", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
+			lcd.print("  ");
+			/*
+			if(secCnt & 1)
+				lcd.print(':');
+			else
+				lcd.print(' ');
+			*/
+			uiInstrument("B", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit, false);
+
+			lcd.setCursor(0, 1);
+			uiInstrument("C", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit, false);
+			lcd.print("  ");
+			/*
+			if(secCnt & 1)
+				lcd.print(' ');
+			else
+				lcd.print(':');
+			*/
+			uiInstrument("D", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit, false);
+		}
+		else if(uiPage==1)
+			uiInstrument("A ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
+		else if(uiPage==2)
+			uiInstrument("B ", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit);
+		else if(uiPage==3)
+			uiInstrument("C ", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit);
+		else if(uiPage==4)
+			uiInstrument("D ", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit);
+		else if(uiPage==5) {
+			lcd.setCursor(0, 0);
+			lcd.print(F("EMAIL  "));
+			lcd.print(F("BCSEDLON@"));
+			lcd.setCursor(0, 1);
+			//uiLcdPrintSpaces8();
+			lcd.setCursor(0, 1);
+			lcd.print(F("       GMAIL.COM"));
+		}
+		/*
+		else if(uiPage==6) {
+			lcd.setCursor(0, 0);
+			lcd.print(F("CO2: "));
+			lcd.print(co2);
+			uiLcdPrintSpaces8();
+			lcd.setCursor(0, 1);
+			if(co2LowAlarm.active) {
+				lcd.print(F("NIZKA KONCENT"));
+				if(secCnt & 1)
+					lcd.print(F("!!!"));
+				else
+					lcd.print(F("   "));
+			}
+			else {
+				uiLcdPrintSpaces8();
+				uiLcdPrintSpaces8();
+			}
+		}*/
+	}
 
 
 	//lcd.backlight();
@@ -428,6 +831,71 @@ void uiMain() {
 	lcd.print('|');
 	lcd.print('-');
 	*/
+
+	/*
+	if(uiState == UISTATE_EDITTEXT) {
+
+		lcd.setCursor(0, 0);
+		//"0123456789ABCDEF"
+		lcd.print(F("TEXT:"));
+
+		if(uiChar == 'C')
+			uiPage++;
+		if(uiChar == 'D')
+			uiPage--;
+
+		uiPage = max(0, uiPage);
+		uiPage = min(15, uiPage);
+
+		//text[0] = 64;
+		uint8_t i;
+
+		//strncpy(text2, text, 16);
+		i = text[uiPage];
+		if(uiChar == 'A') i++;
+		if(uiChar == 'B') i--;
+		i = max(32, i);
+		i = min(126, i);
+		text[uiPage] = (char)i;
+
+		lcd.setCursor(0, 1);
+		lcd.print(text);
+
+		uiLcdPrintSpaces8();
+		uiLcdPrintSpaces8();
+
+		if(secCnt & 1) {
+			lcd.setCursor(uiPage, 1);
+			lcd.print('_');
+		}
+
+		//lcd.setCursor(uiPage, 1);
+		//lcd.print(char(i));
+
+		//Serial.println(uiChar);
+		//Serial.println();
+		//Serial.println(uiPage);
+		//Serial.println(i);
+		//Serial.println();
+
+		if(uiChar == '*') {
+			strncpy(text1, text, 16);
+			//uiState = UISTATE_MAIN;
+			//uiMenuBlocked = false;
+			//Menu.enable(true);
+			//uiState=0;
+		}
+
+		if(uiChar == '#') {
+			uiMenuBlocked = false;
+			//Menu.enable(true);
+			uiState = UISTATE_MAIN;
+		}
+
+
+
+	}*/
+	uiChar = 0;
 }
 
 /*
@@ -440,7 +908,9 @@ void listener(char ch) {
 void loadEEPROM() {
     using namespace OMEEPROM;
 
+    // A
     read(ADDR_A_MODE, A_mode);
+    read(ADDR_A_STATE, A_state);
     read(ADDR_A_INIT, A_init);
     read(ADDR_A_CYCLESLIMIT, A_cyclesLimit);
     read(ADDR_A_ONHOUR, A_onHour);
@@ -449,16 +919,57 @@ void loadEEPROM() {
     read(ADDR_A_OFFHOUR, A_offHour);
     read(ADDR_A_OFFMIN, A_offMin);
     read(ADDR_A_OFFSEC, A_offSec);
+
+    // B
+    read(ADDR_B_MODE, B_mode);
+    read(ADDR_B_STATE, B_state);
+    read(ADDR_B_INIT, B_init);
+    read(ADDR_B_CYCLESLIMIT, B_cyclesLimit);
+    read(ADDR_B_ONHOUR, B_onHour);
+    read(ADDR_B_ONMIN, B_onMin);
+    read(ADDR_B_ONSEC, B_onSec);
+    read(ADDR_B_OFFHOUR, B_offHour);
+    read(ADDR_B_OFFMIN, B_offMin);
+    read(ADDR_B_OFFSEC, B_offSec);
+
+    // C
+    read(ADDR_C_MODE, C_mode);
+    read(ADDR_C_STATE, C_state);
+    read(ADDR_C_INIT, C_init);
+    read(ADDR_C_CYCLESLIMIT, C_cyclesLimit);
+    read(ADDR_C_ONHOUR, C_onHour);
+    read(ADDR_C_ONMIN, C_onMin);
+    read(ADDR_C_ONSEC, C_onSec);
+    read(ADDR_C_OFFHOUR, C_offHour);
+    read(ADDR_C_OFFMIN, C_offMin);
+    read(ADDR_C_OFFSEC, C_offSec);
+
+    // D
+    read(ADDR_D_MODE, D_mode);
+    read(ADDR_D_STATE, D_state);
+    read(ADDR_D_INIT, D_init);
+    read(ADDR_D_CYCLESLIMIT, D_cyclesLimit);
+    read(ADDR_D_ONHOUR, D_onHour);
+    read(ADDR_D_ONMIN, D_onMin);
+    read(ADDR_D_ONSEC, D_onSec);
+    read(ADDR_D_OFFHOUR, D_offHour);
+    read(ADDR_D_OFFMIN, D_offMin);
+    read(ADDR_D_OFFSEC, D_offSec);
+
 }
 
 void saveDefaultEEPROM() {
     using namespace OMEEPROM;
 
+    // A
     A_mode = 0;
+    A_state = 1;
     A_init = false;
     A_cyclesLimit = 0;
-    A_onHour = A_onMin = A_onSec = A_offHour = A_offMin = A_offSec =0;
+    A_onSec = A_offSec = 1;
+    A_onHour = A_onMin =  A_offHour = A_offMin  =0;
     write(ADDR_A_MODE, A_mode);
+    write(ADDR_A_STATE, A_state);
     write(ADDR_A_INIT, A_init);
     write(ADDR_A_CYCLESLIMIT, A_cyclesLimit);
     write(ADDR_A_ONHOUR, A_onHour);
@@ -467,6 +978,60 @@ void saveDefaultEEPROM() {
     write(ADDR_A_OFFHOUR, A_offHour);
     write(ADDR_A_OFFMIN, A_offMin);
     write(ADDR_A_OFFSEC, A_offSec);
+
+    // B
+    B_mode = 0;
+    B_state = 0;
+    B_init = false;
+    B_cyclesLimit = 0;
+    B_onSec = B_offSec = 2;
+    B_onHour = B_onMin = B_offHour = B_offMin = 0;
+    write(ADDR_B_MODE, B_mode);
+    write(ADDR_B_STATE, B_state);
+    write(ADDR_B_INIT, B_init);
+    write(ADDR_B_CYCLESLIMIT, B_cyclesLimit);
+    write(ADDR_B_ONHOUR, B_onHour);
+    write(ADDR_B_ONMIN, B_onMin);
+    write(ADDR_B_ONSEC, B_onSec);
+    write(ADDR_B_OFFHOUR, B_offHour);
+    write(ADDR_B_OFFMIN, B_offMin);
+    write(ADDR_B_OFFSEC, B_offSec);
+
+    // C
+    C_mode = 0;
+    C_state = 0;
+    C_init = false;
+    C_cyclesLimit = 0;
+    C_onSec = C_offSec = 4;
+    C_onHour = C_onMin = C_offHour = C_offMin = 0;
+    write(ADDR_C_MODE, C_mode);
+    write(ADDR_C_STATE, C_state);
+    write(ADDR_C_INIT, C_init);
+    write(ADDR_C_CYCLESLIMIT, C_cyclesLimit);
+    write(ADDR_C_ONHOUR, C_onHour);
+    write(ADDR_C_ONMIN, C_onMin);
+    write(ADDR_C_ONSEC, C_onSec);
+    write(ADDR_C_OFFHOUR, C_offHour);
+    write(ADDR_C_OFFMIN, C_offMin);
+    write(ADDR_C_OFFSEC, C_offSec);
+
+    // D
+    D_mode = 0;
+    D_state = 0;
+    D_init = false;
+    D_cyclesLimit = 0;
+    D_onSec = D_offSec = 8;
+    D_onHour = D_onMin = D_offHour = D_offMin =0;
+    write(ADDR_D_MODE, D_mode);
+    write(ADDR_D_STATE, D_state);
+    write(ADDR_D_INIT, D_init);
+    write(ADDR_D_CYCLESLIMIT, D_cyclesLimit);
+    write(ADDR_D_ONHOUR, D_onHour);
+    write(ADDR_D_ONMIN, D_onMin);
+    write(ADDR_D_ONSEC, D_onSec);
+    write(ADDR_D_OFFHOUR, D_offHour);
+    write(ADDR_D_OFFMIN, D_offMin);
+    write(ADDR_D_OFFSEC, D_offSec);
 
 }
 
@@ -497,6 +1062,19 @@ void setup()
 	uiMain();
 
 	pinMode(PIN_LED, OUTPUT);
+
+	digitalWrite(PIN_A, true);
+	digitalWrite(PIN_B, true);
+	digitalWrite(PIN_C, true);
+	digitalWrite(PIN_D, true);
+	pinMode(PIN_A, OUTPUT);
+	pinMode(PIN_B, OUTPUT);
+	pinMode(PIN_C, OUTPUT);
+	pinMode(PIN_D, OUTPUT);
+
+	digitalWrite(PIN_BUZZER, HIGH);
+	pinMode(PIN_BUZZER, OUTPUT);
+
 
 	// Timer0 is already used for millis() - we'll just interrupt somewhere
 	// in the middle and call the "Compare A" function below
@@ -533,14 +1111,24 @@ SIGNAL(TIMER0_COMPA_vect)
 }
 */
 
+/*
+void uiSetWifiPass() {
+	Menu.enable(false);
+	uiMenuBlocked = true;
+	uiState = UISTATE_EDITTEXT;
+	uiPage=0;
+	lcd.clear();
 
+	strncpy(text, text1, 16);
+}
+*/
 void uiResetParam() {
 	saveDefaultEEPROM();
 	loadEEPROM();
 	X_restart();
 	X_stop();
+	uiMessage(TEXT_RESETTED);
 }
-
 
 void uiMessage(const char* msg) {
 	lcd.clear();
@@ -568,8 +1156,15 @@ void X_uiStop() {
 }
 void X_uiRestart() {
 	X_restart();
+
+	digitalWrite(PIN_BUZZER, LOW);
+
+
 	uiMessageRestarted();
+
+	digitalWrite(PIN_BUZZER, HIGH);
 }
+
 void A_uiStart() {
 	A_start();
 	uiMessageStarted();
@@ -583,17 +1178,68 @@ void A_uiRestart() {
 	uiMessageRestarted();
 }
 
+
+void B_uiStart() {
+	B_start();
+	uiMessageStarted();
+}
+void B_uiStop() {
+	B_stop();
+	uiMessageStopped();
+}
+void B_uiRestart() {
+	B_restart();
+	uiMessageRestarted();
+}
+
+void C_uiStart() {
+	C_start();
+	uiMessageStarted();
+}
+void C_uiStop() {
+	C_stop();
+	uiMessageStopped();
+}
+void C_uiRestart() {
+	C_restart();
+	uiMessageRestarted();
+}
+
+void D_uiStart() {
+	D_start();
+	uiMessageStarted();
+}
+void D_uiStop() {
+	D_stop();
+	uiMessageStopped();
+}
+void D_uiRestart() {
+	D_restart();
+	uiMessageRestarted();
+}
+
 void X_start() {
 	X_state = 1;
-	A_start();
+	//A_start();
+	if(!A_halfCycles)
+		A_out = A_init;
+	if(!B_halfCycles)
+		B_out = B_init;
+	if(!C_halfCycles)
+		C_out = C_init;
+	if(!D_halfCycles)
+		D_out = D_init;
 }
 void X_stop() {
 	X_state = 0;
-	A_stop();
+	//A_stop();
 }
 void X_restart() {
-	X_state = 1;
+	//X_state = 1;
 	A_restart();
+	B_restart();
+	C_restart();
+	D_restart();
 }
 
 void A_start() {
@@ -605,10 +1251,55 @@ void A_stop() {
 	A_state = 0;
 }
 void A_restart() {
-	A_state = 1;
+	//A_state = 1;
 	A_out = A_init;
 	A_sec = 0;
 	A_halfCycles = 0;
+}
+
+void B_start() {
+	B_state = 1;
+	if(!B_halfCycles)
+		B_out = B_init;
+}
+void B_stop() {
+	B_state = 0;
+}
+void B_restart() {
+	//B_state = 1;
+	B_out = B_init;
+	B_sec = 0;
+	B_halfCycles = 0;
+}
+
+void C_start() {
+	C_state = 1;
+	if(!C_halfCycles)
+		C_out = C_init;
+}
+void C_stop() {
+	C_state = 0;
+}
+void C_restart() {
+	//C_state = 1;
+	C_out = C_init;
+	C_sec = 0;
+	C_halfCycles = 0;
+}
+
+void D_start() {
+	D_state = 1;
+	if(!D_halfCycles)
+		D_out = D_init;
+}
+void D_stop() {
+	D_state = 0;
+}
+void D_restart() {
+	//D_state = 1;
+	D_out = D_init;
+	D_sec = 0;
+	D_halfCycles = 0;
 }
 
 bool getInstrumentControl(bool a, uint8_t mode) {
@@ -618,28 +1309,67 @@ bool getInstrumentControl(bool a, uint8_t mode) {
 	return false;
 }
 
-
-
 // The loop function is called in an endless loop
+
+
+
+double analogRead(int pin, int samples){
+  int result = 0;
+  for(int i=0; i<samples; i++){
+    result += analogRead(pin);
+  }
+  return (double)(result / samples);
+}
+
+
 void loop()
 {
 	//Add your repeated code here
 	//char key = kpd.getKey();
-	char ch = kpd.getRawKey();
-	if(ch == '*') //KPD_ENTER)
-		Menu.enable(true);
+	//char ch = kpd.getRawKey();
+	char ch = kpd.getKey2();
+	if(ch) {
+		co2LowAlarm.ack();
+	}
+
+	if(ch == '*') {//KPD_ENTER)
+		//if(!uiState)
+		if(!uiMenuBlocked)
+			Menu.enable(true);
+		//uiState = 0;
+		//uiPage = 0;
+	}
+	/*
+	if(ch == '#')
+		if(uiState) {
+			Menu.enable(true);
+			uiState = 0;
+		}
+	*/
 
 	Menu.checkInput();
 
+	/*
+	co2 = analogRead(PIN_CO2, 100);
+	double co2LowLimit = 190;
+	double co2LimitHyst = 2;
+	co2LowAlarm.activate(co2 < co2LowLimit);
+	co2LowAlarm.deactivate(co2 > co2LowLimit + co2LimitHyst);
+
+	//co2LowAlarm.activate(true);
+	//co2LowAlarm.deactivate(co2 > co2LowLimit + co2LimitHyst);
+	*/
 
 	if (secInterval.expired()) {
 		secInterval.set(1000);
 		secCnt++;
 
+
+
 		if(X_state) {
 			//running
 
-
+			// A
 			if(((A_halfCycles >> 1) >= A_cyclesLimit) && A_cyclesLimit) {
 				A_state = 0;
 				A_out = false;
@@ -657,24 +1387,99 @@ void loop()
 				A_sec++;
 			}
 
+			// B
+			if(((B_halfCycles >> 1) >= B_cyclesLimit) && B_cyclesLimit) {
+				B_state = 0;
+				B_out = false;
+			}
+			if(B_state) { // && !B_mode
+				if(B_out)
+					B_set = B_onSec + B_onMin*60 + B_onHour*60*60;
+				else
+					B_set = B_offSec + B_offMin*60 + B_offHour*60*60;
+				if(B_sec >= B_set) {
+					B_out = !B_out;
+					B_sec = 0;
+					B_halfCycles++;
+				}
+				B_sec++;
+			}
+
+			// C
+			if(((C_halfCycles >> 1) >= C_cyclesLimit) && C_cyclesLimit) {
+				C_state = 0;
+				C_out = false;
+			}
+			if(C_state) { // && !C_mode
+				if(C_out)
+					C_set = C_onSec + C_onMin*60 + C_onHour*60*60;
+				else
+					C_set = C_offSec + C_offMin*60 + C_offHour*60*60;
+				if(C_sec >= C_set) {
+					C_out = !C_out;
+					C_sec = 0;
+					C_halfCycles++;
+				}
+				C_sec++;
+			}
+
+			// D
+			if(((D_halfCycles >> 1) >= D_cyclesLimit) && D_cyclesLimit) {
+				D_state = 0;
+				D_out = false;
+			}
+			if(D_state) { // && !D_mode
+				if(D_out)
+					D_set = D_onSec + D_onMin*60 + D_onHour*60*60;
+				else
+					D_set = D_offSec + D_offMin*60 + D_offHour*60*60;
+				if(D_sec >= D_set) {
+					D_out = !D_out;
+					D_sec = 0;
+					D_halfCycles++;
+				}
+				D_sec++;
+			}
+
+
+
+
 		}
 
-		A_outPin = getInstrumentControl(A_out, A_mode);
-
 		digitalWrite(PIN_LED, A_outPin);
+
+		A_outPin = getInstrumentControl(A_out, A_mode);
+		B_outPin = getInstrumentControl(B_out, B_mode);
+		C_outPin = getInstrumentControl(C_out, C_mode);
+		D_outPin = getInstrumentControl(D_out, D_mode);
+
+		digitalWrite(PIN_A, !A_outPin);
+		digitalWrite(PIN_B, !B_outPin);
+		digitalWrite(PIN_C, !C_outPin);
+		digitalWrite(PIN_D, !D_outPin);
 	}
 
-	if(!Menu.enable()) {
+	if(!Menu.shown() || !Menu.enable()) {
+	//if(!Menu.enable()) {
 		uiMain();
 
 		ch = kpd.getKey();
+		//ch = kpd.getKey2();
+		/*
 		if(ch =='A') //KPD_UP)
 			uiPage--;
 		if(ch == 'B') //KPD_DOWN)
 			uiPage++;
-		if(ch == '#') //KPD_DOWN)
+		if(ch == '#') {//KPD_DOWN)
 			uiPage = 0;
-		uiPage = max(0, uiPage);
-		uiPage = min(5, uiPage);
+			//uiMenuBlocked = false;
+		}
+		*/
+		//uiPage = max(0, uiPage);
+		//uiPage = min(5, uiPage);
+
+		if(uiChar==0)
+			uiChar = ch;
+
 	}
 }
