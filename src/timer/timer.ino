@@ -24,25 +24,25 @@ uint8_t X_state;
 
 uint8_t A_mode, A_state, A_init;
 uint A_onHour, A_onMin, A_onSec, A_offHour, A_offMin, A_offSec;
-uint A_cyclesLimit, A_halfCycles;
+unsigned long A_cyclesLimit, A_halfCycles;
 unsigned long A_set, A_sec;
 bool  A_out, A_outPin;
 
 uint8_t B_mode, B_state, B_init;
 uint B_onHour, B_onMin, B_onSec, B_offHour, B_offMin, B_offSec;
-uint B_cyclesLimit, B_halfCycles;
+unsigned long B_cyclesLimit, B_halfCycles;
 unsigned long B_set, B_sec;
 bool  B_out, B_outPin;
 
 uint8_t C_mode, C_state, C_init;
 uint C_onHour, C_onMin, C_onSec, C_offHour, C_offMin, C_offSec;
-uint C_cyclesLimit, C_halfCycles;
+unsigned long C_cyclesLimit, C_halfCycles;
 unsigned long C_set, C_sec;
 bool  C_out, C_outPin;
 
 uint8_t D_mode, D_state, D_init;
 uint D_onHour, D_onMin, D_onSec, D_offHour, D_offMin, D_offSec;
-uint D_cyclesLimit, D_halfCycles;
+unsigned long D_cyclesLimit, D_halfCycles;
 unsigned long D_set, D_sec;
 bool  D_out, D_outPin;
 
@@ -385,8 +385,8 @@ private:
 #define ADDR_A_OFFHOUR 		40
 #define ADDR_A_OFFMIN 		44
 #define ADDR_A_OFFSEC 		48
-#define ADDR_A_CYCLESLIMIT	52
-#define ADDR_A_STATE 		56
+#define ADDR_A_STATE 		52
+#define ADDR_A_CYCLESLIMIT	56	// 8 bytes ULONG
 
 // B
 #define ADDR_B_MODE 		80
@@ -397,8 +397,8 @@ private:
 #define ADDR_B_OFFHOUR 		100
 #define ADDR_B_OFFMIN 		104
 #define ADDR_B_OFFSEC 		108
-#define ADDR_B_CYCLESLIMIT	112
-#define ADDR_B_STATE 		116
+#define ADDR_B_STATE 		112
+#define ADDR_B_CYCLESLIMIT	116	// 8 bytes ULONG
 
 // C
 #define ADDR_C_MODE 		140
@@ -409,8 +409,8 @@ private:
 #define ADDR_C_OFFHOUR 		160
 #define ADDR_C_OFFMIN 		164
 #define ADDR_C_OFFSEC 		168
-#define ADDR_C_CYCLESLIMIT	172
-#define ADDR_C_STATE 		176
+#define ADDR_C_STATE 		172
+#define ADDR_C_CYCLESLIMIT	176	// 8 bytes ULONG
 
 // D
 #define ADDR_D_MODE 		200
@@ -421,9 +421,8 @@ private:
 #define ADDR_D_OFFHOUR 		220
 #define ADDR_D_OFFMIN 		224
 #define ADDR_D_OFFSEC 		228
-#define ADDR_D_CYCLESLIMIT	232
-#define ADDR_D_STATE 		236
-
+#define ADDR_D_STATE 		232
+#define ADDR_D_CYCLESLIMIT	236	// 8 bytes ULONG
 
 // Create a list of states and values for a select input
 MENU_SELECT_ITEM  sel_auto= { 0, {TEXT_AUTO_EM} };
@@ -479,7 +478,7 @@ MENU_VALUE A_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&A_onSec
 MENU_VALUE A_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&A_offHour), ADDR_A_OFFHOUR};
 MENU_VALUE A_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&A_offMin), ADDR_A_OFFMIN};
 MENU_VALUE A_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&A_offSec), ADDR_A_OFFSEC};
-MENU_VALUE A_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&A_cyclesLimit), ADDR_A_CYCLESLIMIT};
+MENU_VALUE A_cyclesLimit_value = { TYPE_ULONG,       0,    0,     MENU_TARGET(&A_cyclesLimit), ADDR_A_CYCLESLIMIT};
 
 //                                "123456789ABCDEF"
 MENU_ITEM A_onHour_item   = { {TEXT_A_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&A_onHour_value) };
@@ -518,7 +517,7 @@ MENU_VALUE B_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&B_onSec
 MENU_VALUE B_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&B_offHour), ADDR_B_OFFHOUR};
 MENU_VALUE B_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_offMin), ADDR_B_OFFMIN};
 MENU_VALUE B_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_offSec), ADDR_B_OFFSEC};
-MENU_VALUE B_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&B_cyclesLimit), ADDR_B_CYCLESLIMIT};
+MENU_VALUE B_cyclesLimit_value = { TYPE_ULONG,       0,    0,     MENU_TARGET(&B_cyclesLimit), ADDR_B_CYCLESLIMIT};
 
 //                                "123456789ABCDEF"
 MENU_ITEM B_onHour_item   = { {TEXT_B_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&B_onHour_value) };
@@ -557,7 +556,7 @@ MENU_VALUE C_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&C_onSec
 MENU_VALUE C_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&C_offHour), ADDR_C_OFFHOUR};
 MENU_VALUE C_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_offMin), ADDR_C_OFFMIN};
 MENU_VALUE C_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_offSec), ADDR_C_OFFSEC};
-MENU_VALUE C_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&C_cyclesLimit), ADDR_C_CYCLESLIMIT};
+MENU_VALUE C_cyclesLimit_value = { TYPE_ULONG,       0,    0,     MENU_TARGET(&C_cyclesLimit), ADDR_C_CYCLESLIMIT};
 
 //                                "123456789ABCDEF"
 MENU_ITEM C_onHour_item   = { {TEXT_C_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&C_onHour_value) };
@@ -596,7 +595,7 @@ MENU_VALUE D_onSec_value =  { TYPE_UINT,       0,    0,     MENU_TARGET(&D_onSec
 MENU_VALUE D_offHour_value ={ TYPE_UINT,       0,    0,     MENU_TARGET(&D_offHour), ADDR_D_OFFHOUR};
 MENU_VALUE D_offMin_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_offMin), ADDR_D_OFFMIN};
 MENU_VALUE D_offSec_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_offSec), ADDR_D_OFFSEC};
-MENU_VALUE D_cyclesLimit_value = { TYPE_UINT,       0,    0,     MENU_TARGET(&D_cyclesLimit), ADDR_D_CYCLESLIMIT};
+MENU_VALUE D_cyclesLimit_value = { TYPE_ULONG,       0,    0,     MENU_TARGET(&D_cyclesLimit), ADDR_D_CYCLESLIMIT};
 
 //                                "123456789ABCDEF"
 MENU_ITEM D_onHour_item   = { {TEXT_D_ONHOUR},   ITEM_VALUE,  0,        MENU_TARGET(&D_onHour_value) };

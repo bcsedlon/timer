@@ -782,7 +782,7 @@ void OMMenuMgr::_modifyTemp(uint8_t p_type, uint8_t p_mode, long p_min, long p_m
 
         // apply holding rate mod
     mod *= m_holdMod;
-    /*
+
         // handle float precision adjustment
     float fmod = (float) mod;
 
@@ -793,7 +793,7 @@ void OMMenuMgr::_modifyTemp(uint8_t p_type, uint8_t p_mode, long p_min, long p_m
     else if( p_type == TYPE_FLOAT_1000 )
         fmod /= 1000.0;
 
-
+    /*
         // manage correct temporary variable change based on type
         // and apply floor/ceiling from min/max
 
@@ -837,31 +837,105 @@ void OMMenuMgr::_modifyTemp(uint8_t p_type, uint8_t p_mode, long p_min, long p_m
     //bcsedlon
     if(ch == 3 || ch == 4) { //MODE_INCREMENT MODE_DECREMENT
     	m_inEditCnt = 0;
-    	m_tempI += mod;
+    	//m_tempI += mod;
+    	m_tempF += fmod;
+    }
+    else {
+    	mod = 0;
+    	fmod = 0;
     }
 
     //Serial.println(int(ch));
-    Serial.println(int(p_mode));
+    //Serial.println(int(p_mode));
 
     if(ch == 'C')
-    	m_tempI = 0;
+    	m_temp = m_tempI = m_tempL = m_tempF = 0;
     else {
     	ch -= 48;
     	if(ch >= 0 && ch <= 9) {
-    		if(m_inEditCnt > 1)
+    		if(m_inEditCnt > 1) {
+    			m_temp *= 10;
     			m_tempI *= 10;
-    		if(m_inEditCnt == 1)
-    			m_tempI = 0;
-    		m_tempI = m_tempI + ch;
+    			m_tempL *= 10;
+    			m_tempF *= (float)10.0;
+    		}
+    		if(m_inEditCnt == 1) {
+    			m_temp = m_tempI = m_tempL = 0;
+    			 m_tempF = (float)0.0;
+    		}
+
+
+    		m_temp += ch;
+    		m_tempI += ch;
+    		m_tempL += ch;
+
+    		//m_tempF += (float)ch;
+    		if( p_type == TYPE_FLOAT_10 )
+    			m_tempF += (float)ch / 10.0;
+    		else if( p_type == TYPE_FLOAT_100 )
+    			m_tempF += (float)ch / 100.0;
+    		else if( p_type == TYPE_FLOAT_1000 )
+    			m_tempF += (float)ch / 1000.0;
     	}
     }
-    //Serial.println(m_tempI);
 
-    if( p_min != 0 || p_max != 0 )
-    	m_tempI = m_tempI > p_max ? p_max : ( m_tempI < p_min ? p_min : m_tempI );
-    tempNum = reinterpret_cast<void*>(&m_tempI);
+    /*
+    Serial.println(m_temp);
+    Serial.println(m_tempI);
+    Serial.println(m_tempL);
+    Serial.println(m_tempF);
+    Serial.println();
+	*/
 
-        // display new temporary value
+    // manage correct temporary variable change based on type
+    // and apply floor/ceiling from min/max
+
+	if( p_type == TYPE_BYTE ) {
+		//m_temp += mod;
+		if( p_min != 0 || p_max != 0 )
+			m_temp = m_temp > p_max ? p_max : ( m_temp < p_min ? p_min : m_temp );
+		tempNum = reinterpret_cast<void*>(&m_temp);
+	}
+	else if( p_type == TYPE_INT ) {
+		m_tempI += mod;
+		if( p_min != 0 || p_max != 0 )
+			m_tempI = m_tempI > p_max ? p_max : ( m_tempI < p_min ? p_min : m_tempI );
+		tempNum = reinterpret_cast<void*>(&m_tempI);
+	}
+	else if( p_type == TYPE_UINT ) {
+		*reinterpret_cast<unsigned int*>(&m_tempI) += mod;
+		if( p_min != 0 || p_max != 0 )
+			m_tempI = m_tempI > p_max ? p_max : ( m_tempI < p_min ? p_min : m_tempI );
+		tempNum = reinterpret_cast<void*>(&m_tempI);
+	}
+	else if( p_type == TYPE_LONG ) {
+		m_tempL += mod;
+		if( p_min != 0 || p_max != 0 )
+			m_tempL = m_tempL > p_max ? p_max : ( m_tempL < p_min ? p_min : m_tempL );
+		tempNum = reinterpret_cast<void*>(&m_tempL);
+	}
+	else if( p_type == TYPE_ULONG ) {
+		*reinterpret_cast<unsigned long*>(&m_tempL) += mod;
+		if( p_min != 0 || p_max != 0 )
+			m_tempL = m_tempL > p_max ? p_max : ( m_tempL < p_min ? p_min : m_tempL );
+		tempNum = reinterpret_cast<void*>(&m_tempL);
+	}
+	else if( p_type >= TYPE_FLOAT ) {
+		//m_tempF += fmod;
+		if( p_min != 0 || p_max != 0 )
+			m_tempF = m_tempF > p_max ? p_max : ( m_tempF < p_min ? p_min : m_tempF );
+		tempNum = reinterpret_cast<void*>(&m_tempF);
+	}
+
+	/*
+    Serial.println(m_temp);
+    Serial.println(m_tempI);
+    Serial.println(m_tempL);
+    Serial.println(m_tempF);
+    Serial.println('-');
+	*/
+
+    // display new temporary value
     _displayVoidNum(tempNum, p_type, 1, 0);
 
 
