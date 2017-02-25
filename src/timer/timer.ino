@@ -47,7 +47,7 @@ unsigned long D_cyclesLimit, D_halfCycles;
 unsigned long D_set, D_sec;
 bool  D_out, D_outPin;
 
-uint8_t uiPage;
+int uiPage;
 
 /*
 double co2;
@@ -513,7 +513,8 @@ MENU_ITEM A_offSec_item   = { {TEXT_A_OFFSEC},   ITEM_VALUE,  0,        MENU_TAR
 MENU_ITEM A_cyclesLimit_item   = { {TEXT_A_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&A_cyclesLimit_value) };
 MENU_ITEM A_offsetSec_item   = { {TEXT_A_OFFSETSEC},   ITEM_VALUE,  0,        MENU_TARGET(&A_offsetSec_value) };
 
-MENU_LIST const A_submenu_list[] = { &A_state_item, &A_init_item, &A_cyclesLimit_item, &A_restart_item, &A_onSec_item,&A_onMin_item, &A_onHour_item, &A_offSec_item,&A_offMin_item, &A_offHour_item, &A_offsetSec_item, &A_mode_item}; //&A_start_item, &A_stop_item,
+//MENU_LIST const A_submenu_list[] = { &A_state_item, &A_init_item, &A_cyclesLimit_item, &A_restart_item, &A_onSec_item,&A_onMin_item, &A_onHour_item, &A_offSec_item,&A_offMin_item, &A_offHour_item, &A_offsetSec_item, &A_mode_item}; //&A_start_item, &A_stop_item,
+MENU_LIST const A_submenu_list[] = { &A_init_item, &A_cyclesLimit_item, &A_onSec_item,&A_onMin_item, &A_onHour_item, &A_offSec_item,&A_offMin_item, &A_offHour_item, &A_offsetSec_item, &A_mode_item}; //&A_start_item, &A_stop_item,
 MENU_ITEM A_menu_submenu = { {TEXT_A_ROOT},  ITEM_MENU,  MENU_SIZE(A_submenu_list),  MENU_TARGET(&A_submenu_list) };
 
 ////////////////////////////////////////
@@ -554,7 +555,8 @@ MENU_ITEM B_offSec_item   = { {TEXT_B_OFFSEC},   ITEM_VALUE,  0,        MENU_TAR
 MENU_ITEM B_cyclesLimit_item   = { {TEXT_B_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&B_cyclesLimit_value) };
 MENU_ITEM B_offsetSec_item   = { {TEXT_B_OFFSETSEC},   ITEM_VALUE,  0,        MENU_TARGET(&B_offsetSec_value) };
 
-MENU_LIST const B_submenu_list[] = { &B_state_item, &B_init_item, &B_cyclesLimit_item, &B_restart_item, &B_onSec_item,&B_onMin_item, &B_onHour_item, &B_offSec_item,&B_offMin_item, &B_offHour_item, &B_offsetSec_item, &B_mode_item}; //&B_start_item, &B_stop_item,
+//MENU_LIST const B_submenu_list[] = { &B_state_item, &B_init_item, &B_cyclesLimit_item, &B_restart_item, &B_onSec_item,&B_onMin_item, &B_onHour_item, &B_offSec_item,&B_offMin_item, &B_offHour_item, &B_offsetSec_item, &B_mode_item}; //&B_start_item, &B_stop_item,
+MENU_LIST const B_submenu_list[] = { &B_init_item, &B_cyclesLimit_item,  &B_onSec_item,&B_onMin_item, &B_onHour_item, &B_offSec_item,&B_offMin_item, &B_offHour_item, &B_offsetSec_item, &B_mode_item}; //&B_start_item, &B_stop_item,
 MENU_ITEM B_menu_submenu = { {TEXT_B_ROOT},  ITEM_MENU,  MENU_SIZE(B_submenu_list),  MENU_TARGET(&B_submenu_list) };
 
 ////////////////////////////////////////
@@ -595,7 +597,8 @@ MENU_ITEM C_offSec_item   = { {TEXT_C_OFFSEC},   ITEM_VALUE,  0,        MENU_TAR
 MENU_ITEM C_cyclesLimit_item   = { {TEXT_C_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&C_cyclesLimit_value) };
 MENU_ITEM C_offsetSec_item   = { {TEXT_C_OFFSETSEC},   ITEM_VALUE,  0,        MENU_TARGET(&C_offsetSec_value) };
 
-MENU_LIST const C_submenu_list[] = { &C_state_item, &C_init_item, &C_cyclesLimit_item, &C_restart_item, &C_onSec_item,&C_onMin_item, &C_onHour_item, &C_offSec_item,&C_offMin_item, &C_offHour_item, &C_offsetSec_item, &C_mode_item}; //&C_start_item, &C_stop_item,
+//MENU_LIST const C_submenu_list[] = { &C_state_item, &C_init_item, &C_cyclesLimit_item, &C_restart_item, &C_onSec_item,&C_onMin_item, &C_onHour_item, &C_offSec_item,&C_offMin_item, &C_offHour_item, &C_offsetSec_item, &C_mode_item}; //&C_start_item, &C_stop_item,
+MENU_LIST const C_submenu_list[] = { &C_init_item, &C_cyclesLimit_item, &C_onSec_item,&C_onMin_item, &C_onHour_item, &C_offSec_item,&C_offMin_item, &C_offHour_item, &C_offsetSec_item, &C_mode_item}; //&C_start_item, &C_stop_item,
 MENU_ITEM C_menu_submenu = { {TEXT_C_ROOT},  ITEM_MENU,  MENU_SIZE(C_submenu_list),  MENU_TARGET(&C_submenu_list) };
 
 ////////////////////////////////////////
@@ -636,7 +639,8 @@ MENU_ITEM D_offSec_item   = { {TEXT_D_OFFSEC},   ITEM_VALUE,  0,        MENU_TAR
 MENU_ITEM D_cyclesLimit_item   = { {TEXT_D_CYCLELIMIT},   ITEM_VALUE,  0,        MENU_TARGET(&D_cyclesLimit_value) };
 MENU_ITEM D_offsetSec_item   = { {TEXT_D_OFFSETSEC},   ITEM_VALUE,  0,        MENU_TARGET(&D_offsetSec_value) };
 
-MENU_LIST const D_submenu_list[] = { &D_state_item, &D_init_item, &D_cyclesLimit_item, &D_restart_item, &D_onSec_item,&D_onMin_item, &D_onHour_item, &D_offSec_item,&D_offMin_item, &D_offHour_item, &D_offsetSec_item, &D_mode_item}; //&D_start_item, &D_stop_item,
+//MENU_LIST const D_submenu_list[] = { &D_state_item, &D_init_item, &D_cyclesLimit_item, &D_restart_item, &D_onSec_item,&D_onMin_item, &D_onHour_item, &D_offSec_item,&D_offMin_item, &D_offHour_item, &D_offsetSec_item, &D_mode_item}; //&D_start_item, &D_stop_item,
+MENU_LIST const D_submenu_list[] = { &D_init_item, &D_cyclesLimit_item, &D_onSec_item,&D_onMin_item, &D_onHour_item, &D_offSec_item,&D_offMin_item, &D_offHour_item, &D_offsetSec_item, &D_mode_item}; //&D_start_item, &D_stop_item,
 MENU_ITEM D_menu_submenu = { {TEXT_D_ROOT},  ITEM_MENU,  MENU_SIZE(D_submenu_list),  MENU_TARGET(&D_submenu_list) };
 
 
@@ -668,6 +672,7 @@ void uiInstrumentSettingsOff(char* name, bool init, uint offSec, uint offMin, ui
 	//lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print(name);
+	lcd.print(' ');
 	//lcd.print(name);
 	//lcd.print(offsetSec);
 	lcd.print(TEXT_OFF3);
@@ -707,6 +712,7 @@ void uiInstrumentSettingsOn(char* name, bool init, uint offSec, uint offMin, uin
 	//lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print(name);
+	lcd.print(' ');
 	//lcd.print(name);
 	//lcd.print(offsetSec);
 
@@ -744,6 +750,67 @@ void uiInstrumentSettingsOn(char* name, bool init, uint offSec, uint offMin, uin
 }
 
 void uiInstrument(char* name, bool out, uint8_t mode, uint8_t state, unsigned long cycles, unsigned long cyclesLimit, bool detail=true) {
+
+	if(detail)
+		lcd.setCursor(0, 0);
+	lcd.print(name);
+
+
+	if(!detail) {
+		if(secCnt & 1)
+			lcd.print(':');
+		else
+			lcd.print(' ');
+	}
+
+	if(detail) {
+		lcd.print(' ');
+		if(out)
+			lcd.print(F(TEXT_ACT));
+		else
+			lcd.print(F(TEXT_PAS));
+		if(mode)
+			lcd.print(F(TEXT_MAN));
+		else
+			lcd.print(F(TEXT_AUTO));
+		/*
+		if(state)
+			lcd.print(F(TEXT_ACT));
+		else
+			lcd.print(F(TEXT_PAS));
+		*/
+		if(X_state)
+			lcd.print(F(TEXT_RUN));
+		else
+			lcd.print(F(TEXT_STOP));
+		uiLcdPrintSpaces8();
+	}
+	else {
+		if(out)
+			lcd.print(F(TEXT_ON2));
+		else
+			lcd.print(F(TEXT_OFF2));
+		if(mode)
+			lcd.print(F(TEXT_MAN2));
+		else
+			lcd.print(F(TEXT_AUTO2));
+	}
+	if(detail) {
+		lcd.setCursor(0, 1);
+		lcd.print(cycles);
+
+		if(secCnt & 1)
+			lcd.print(':');
+		else
+			lcd.print(' ');
+
+		lcd.print(cyclesLimit);
+		uiLcdPrintSpaces8();
+		uiLcdPrintSpaces8();
+	}
+}
+
+void uiInstrumentX(char* name, bool out, uint8_t mode, uint8_t state, unsigned long cycles, unsigned long cyclesLimit, bool detail=true) {
 	//lcd.clear();
 	if(detail)
 		lcd.setCursor(0, 0);
@@ -867,6 +934,7 @@ void uiMain() {
 		uiPage = min(13, uiPage);
 
 		if(uiPage==0) {
+			/*
 			//lcd.setCursor(0, 0);
 			//lcd.print("-");
 			//uiLcdPrintSpaces8();
@@ -874,53 +942,76 @@ void uiMain() {
 			lcd.setCursor(0, 0);
 			uiInstrument("A", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
 			lcd.print("  ");
-			/*
-			if(secCnt & 1)
-				lcd.print(':');
-			else
-				lcd.print(' ');
-			*/
+
+			//if(secCnt & 1)
+			//	lcd.print(':');
+			//else
+			//	lcd.print(' ');
+
 			uiInstrument("B", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit, false);
 
 			lcd.setCursor(0, 1);
 			uiInstrument("C", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit, false);
 			lcd.print("  ");
-			/*
-			if(secCnt & 1)
-				lcd.print(' ');
-			else
-				lcd.print(':');
-			*/
+
+			//if(secCnt & 1)
+			//	lcd.print(' ');
+			//else
+			//	lcd.print(':');
+
 			uiInstrument("D", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit, false);
+			*/
+
+			lcd.setCursor(0, 0);
+			if(X_state)
+				lcd.print(F(TEXT_RUN));
+			else
+				lcd.print(F(TEXT_STOP));
+			lcd.print("   ");
+
+
+			//lcd.setCursor(7, 0);
+			uiInstrument("A", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit, false);
+			lcd.print(' ');
+			uiInstrument("B", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit, false);
+			//lcd.print(' ');
+			lcd.setCursor(0, 1);
+			uiLcdPrintSpaces8();
+			lcd.setCursor(7, 1);
+			uiInstrument("C", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit, false);
+			lcd.print(' ');
+			uiInstrument("D", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit, false);
+			//lcd.print(' ');
 		}
+
 		else if(uiPage==1)
-			uiInstrument("A ", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
+			uiInstrument("A:", A_outPin, A_mode, A_state, A_halfCycles>>1, A_cyclesLimit);
 		else if(uiPage==2)
-			uiInstrument("B ", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit);
+			uiInstrument("B:", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit);
 		else if(uiPage==3)
-			uiInstrument("C ", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit);
+			uiInstrument("C:", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit);
 		else if(uiPage==4)
-			uiInstrument("D ", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit);
+			uiInstrument("D:", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit);
 
 		else if(uiPage==5)
-			uiInstrumentSettingsOff("A ", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
+			uiInstrumentSettingsOff("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
 		else if(uiPage==6)
-			uiInstrumentSettingsOn("A ", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
+			uiInstrumentSettingsOn("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
 
 		else if(uiPage==7)
-			uiInstrumentSettingsOff("B ", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
+			uiInstrumentSettingsOff("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
 		else if(uiPage==8)
-			uiInstrumentSettingsOn("B ", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
+			uiInstrumentSettingsOn("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
 
 		else if(uiPage==9)
-			uiInstrumentSettingsOff("C ", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
+			uiInstrumentSettingsOff("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
 		else if(uiPage==10)
-			uiInstrumentSettingsOn("C ", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
+			uiInstrumentSettingsOn("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
 
 		else if(uiPage==11)
-			uiInstrumentSettingsOff("D ", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
+			uiInstrumentSettingsOff("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
 		else if(uiPage==12)
-			uiInstrumentSettingsOn("D ", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
+			uiInstrumentSettingsOn("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
 
 		else if(uiPage==13) {
 			lcd.setCursor(0, 0);
