@@ -2,7 +2,7 @@
 //This is a automatic generated file
 //Please do not modify this file
 //If you touch this file your change will be overwritten during the next build
-//This file has been generated on 2017-02-08 14:03:19
+//This file has been generated on 2017-02-25 09:32:27
 
 #include "Arduino.h"
 #include "Arduino.h"
@@ -16,9 +16,14 @@ void uiDraw(char* p_text, int p_row, int p_col, int len) ;
 void uiLcdPrintSpaces8() ;
 void uiMain() ;
 void loadEEPROM() ;
+void saveSetting3() ;
+void saveSetting1() ;
+void saveSetting2() ;
 void saveDefaultEEPROM() ;
 void setup() ;
-void uiResetParam() ;
+void uiSetParam1() ;
+void uiSetParam2() ;
+void uiSetParam3() ;
 void uiMessage(const char* msg) ;
 void uiMessageStarted();
 void uiMessageStopped();
