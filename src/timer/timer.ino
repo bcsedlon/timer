@@ -151,7 +151,7 @@ public:
     	    if(bitMap[0] == 8) X_restart();
     		//return NO_KEY;
     	}
-    	if(bitMap[3] == 2) {
+    	if(bitMap[3] == 4) {
     		if(bitMap[2] == 8) A_mode=1;
     		if(bitMap[1] == 8) A_mode=2;
     		if(bitMap[0] == 8) A_mode=0;
@@ -169,7 +169,8 @@ public:
     		if(bitMap[0] == 1) D_mode=0;
     		//return NO_KEY;
     	}
-    	if(bitMap[3] == 4) {
+    	/*
+    	if(bitMap[3] == 2) {
     		if(bitMap[2] == 8) A_start();
     	    if(bitMap[1] == 8) A_stop();
     	    if(bitMap[0] == 8) A_restart();
@@ -187,7 +188,7 @@ public:
     	    if(bitMap[0] == 1) D_restart();
     	    //return NO_KEY;
     	}
-
+    	 */
 
     	//Serial.println(kTime);
     	// for menu system, makes delay between first and next
@@ -976,8 +977,8 @@ void uiMain() {
 			uiInstrument("B", B_outPin, B_mode, B_state, B_halfCycles>>1, B_cyclesLimit, false);
 			//lcd.print(' ');
 			lcd.setCursor(0, 1);
-			uiLcdPrintSpaces8();
-			lcd.setCursor(7, 1);
+			lcd.print(F("       "));
+			//lcd.setCursor(7, 1);
 			uiInstrument("C", C_outPin, C_mode, C_state, C_halfCycles>>1, C_cyclesLimit, false);
 			lcd.print(' ');
 			uiInstrument("D", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit, false);
