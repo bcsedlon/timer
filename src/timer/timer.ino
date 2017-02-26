@@ -13,6 +13,8 @@
 #define PIN_C 11
 #define PIN_D 12
 
+#define PIN_PAUSE 7
+
 #define PIN_BUZZER 4
 #define PIN_CO2 A0
 
@@ -290,9 +292,9 @@ private:
 #define TEXT_START_ALL_EM 		"START!"
 #define TEXT_STOP_ALL_EM 		"STOP!"
 #define TEXT_RESET_ALL_EM 		"RESET!"
-#define TEXT_SETPARAM1_EM 		"NASTAVENI 1!"
-#define TEXT_SETPARAM2_EM 		"NASTAVENI 2!"
-#define TEXT_SETPARAM3_EM 		"NASTAVENI 3!"
+#define TEXT_SETPARAM1_EM 		"NAST 1/1/1/1M!"
+#define TEXT_SETPARAM2_EM 		"NAST 15/10M!"
+#define TEXT_SETPARAM3_EM 		"NAST TEST!"
 #define TEXT_RESETTED			"NASTAVENO"
 #define TEXT_OFF3				"VYP"
 #define TEXT_ON3 				"ZAP"
@@ -308,8 +310,8 @@ private:
 #define TEXT_AUTO 				"AUT "
 #define TEXT_PAS				"VYP "
 #define TEXT_ACT				"ZAP "
-#define TEXT_STOP 				"STOP"
-#define TEXT_RUN 				"CHOD"
+#define TEXT_STOP 				"STOP "
+#define TEXT_RUN 				"START"
 #define TEXT_OFF2				"0"
 #define TEXT_ON2 				"1"
 #define TEXT_MAN2 				"M"
@@ -338,9 +340,9 @@ private:
 
 // B
 #define TEXT_B_ROOT				"B NASTAVENI->"
-#define TEXT_B_START_EM 	"B START!"
-#define TEXT_B_STOP_EM 		"B STOP!"
-#define TEXT_B_RESET_EM 	"B RESET!"
+#define TEXT_B_START_EM 		"B START!"
+#define TEXT_B_STOP_EM 			"B STOP!"
+#define TEXT_B_RESET_EM 		"B RESET!"
 #define TEXT_B_INIT				"B VYCHOZI:"
 #define TEXT_B_MODE				"B RELE:"
 #define TEXT_B_STATE			"B STAV:"
@@ -355,9 +357,9 @@ private:
 
 // C
 #define TEXT_C_ROOT				"C NASTAVENI->"
-#define TEXT_C_START_EM 	"C START!"
-#define TEXT_C_STOP_EM 		"C STOP!"
-#define TEXT_C_RESET_EM 	"C RESET!"
+#define TEXT_C_START_EM 		"C START!"
+#define TEXT_C_STOP_EM 			"C STOP!"
+#define TEXT_C_RESET_EM 		"C RESET!"
 #define TEXT_C_INIT				"C VYCHOZI:"
 #define TEXT_C_MODE				"C RELE:"
 #define TEXT_C_STATE			"C STAV:"
@@ -372,9 +374,9 @@ private:
 
 // D
 #define TEXT_D_ROOT				"D NASTAVENI->"
-#define TEXT_D_START_EM 	"D START!"
-#define TEXT_D_STOP_EM 		"D STOP!"
-#define TEXT_D_RESET_EM 	"D RESET!"
+#define TEXT_D_START_EM 		"D START!"
+#define TEXT_D_STOP_EM 			"D STOP!"
+#define TEXT_D_RESET_EM 		"D RESET!"
 #define TEXT_D_INIT				"D VYCHOZI:"
 #define TEXT_D_MODE				"D RELE:"
 #define TEXT_D_STATE			"D STAV:"
@@ -758,10 +760,10 @@ void uiInstrument(char* name, bool out, uint8_t mode, uint8_t state, unsigned lo
 
 
 	if(!detail) {
-		if(secCnt & 1)
-			lcd.print(':');
-		else
+		if((secCnt & 1) && X_state && state)
 			lcd.print(' ');
+		else
+			lcd.print(':');
 	}
 
 	if(detail) {
@@ -800,10 +802,10 @@ void uiInstrument(char* name, bool out, uint8_t mode, uint8_t state, unsigned lo
 		lcd.setCursor(0, 1);
 		lcd.print(cycles);
 
-		if(secCnt & 1)
-			lcd.print(':');
-		else
+		if((secCnt & 1) && X_state && state)
 			lcd.print(' ');
+		else
+			lcd.print(':');
 
 		lcd.print(cyclesLimit);
 		uiLcdPrintSpaces8();
@@ -849,9 +851,9 @@ void uiInstrumentX(char* name, bool out, uint8_t mode, uint8_t state, unsigned l
 		else
 			lcd.print(F(TEXT_OFF2));
 		if(!mode && state && X_state)
-			lcd.print(F(TEXT_RUN2));
+			lcd.print(F(TEXT_RUN));
 		else
-			lcd.print(F(TEXT_STOP2));
+			lcd.print(F(TEXT_STOP));
 
 		/*
 		if(mode)
@@ -968,7 +970,7 @@ void uiMain() {
 				lcd.print(F(TEXT_RUN));
 			else
 				lcd.print(F(TEXT_STOP));
-			lcd.print("   ");
+			lcd.print("  ");
 
 
 			//lcd.setCursor(7, 0);
@@ -1403,6 +1405,8 @@ void setup()
 		//saveDefaultEEPROM();
 		saveSetting1();
 
+	X_restart();
+
 	Wire.begin( );
 	kpd.begin( makeKeymap(keys) );
 	//kpd.setDebounceTime(10);
@@ -1427,6 +1431,9 @@ void setup()
 	pinMode(PIN_B, OUTPUT);
 	pinMode(PIN_C, OUTPUT);
 	pinMode(PIN_D, OUTPUT);
+
+	pinMode(PIN_PAUSE, INPUT);
+	digitalWrite(PIN_PAUSE, HIGH);
 
 	digitalWrite(PIN_BUZZER, HIGH);
 	pinMode(PIN_BUZZER, OUTPUT);
@@ -1628,7 +1635,7 @@ void A_stop() {
 	A_state = 0;
 }
 void A_restart() {
-	//A_state = 1;
+	A_state = 1;
 	A_out = A_init;
 	A_sec = 0;
 	A_halfCycles = 0;
@@ -1644,7 +1651,7 @@ void B_stop() {
 	B_state = 0;
 }
 void B_restart() {
-	//B_state = 1;
+	B_state = 1;
 	B_out = B_init;
 	B_sec = 0;
 	B_halfCycles = 0;
@@ -1660,7 +1667,7 @@ void C_stop() {
 	C_state = 0;
 }
 void C_restart() {
-	//C_state = 1;
+	C_state = 1;
 	C_out = C_init;
 	C_sec = 0;
 	C_halfCycles = 0;
@@ -1676,7 +1683,7 @@ void D_stop() {
 	D_state = 0;
 }
 void D_restart() {
-	//D_state = 1;
+	D_state = 1;
 	D_out = D_init;
 	D_sec = 0;
 	D_halfCycles = 0;
@@ -1828,10 +1835,12 @@ void loop()
 
 
 
-			secCnt++;
-			if(!secCnt)
-				secOverflow = true;
+
 		}
+
+		secCnt++;
+		if(!secCnt)
+			secOverflow = true;
 
 		digitalWrite(PIN_LED, A_outPin);
 
