@@ -49,6 +49,8 @@ unsigned long D_cyclesLimit, D_halfCycles;
 unsigned long D_set, D_sec;
 bool  D_out, D_outPin;
 
+bool A_out2, B_out2, C_out2, D_out2;
+
 int uiPage;
 
 /*
@@ -995,24 +997,24 @@ void uiMain() {
 			uiInstrument("D:", D_outPin, D_mode, D_state, D_halfCycles>>1, D_cyclesLimit);
 
 		else if(uiPage==5)
-			uiInstrumentSettingsOff("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
+			uiInstrumentSettingsOff("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out2, A_sec);
 		else if(uiPage==6)
-			uiInstrumentSettingsOn("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out, A_sec);
+			uiInstrumentSettingsOn("A:", A_init, A_offSec, A_offMin, A_offHour, A_onSec, A_onMin, A_onHour, A_out2, A_sec);
 
 		else if(uiPage==7)
-			uiInstrumentSettingsOff("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
+			uiInstrumentSettingsOff("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out2, B_sec);
 		else if(uiPage==8)
-			uiInstrumentSettingsOn("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out, B_sec);
+			uiInstrumentSettingsOn("B:", B_init, B_offSec, B_offMin, B_offHour, B_onSec, B_onMin, B_onHour, B_out2, B_sec);
 
 		else if(uiPage==9)
-			uiInstrumentSettingsOff("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
+			uiInstrumentSettingsOff("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out2, C_sec);
 		else if(uiPage==10)
-			uiInstrumentSettingsOn("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out, C_sec);
+			uiInstrumentSettingsOn("C:", C_init, C_offSec, C_offMin, C_offHour, C_onSec, C_onMin, C_onHour, C_out2, C_sec);
 
 		else if(uiPage==11)
-			uiInstrumentSettingsOff("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
+			uiInstrumentSettingsOff("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out2, D_sec);
 		else if(uiPage==12)
-			uiInstrumentSettingsOn("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out, D_sec);
+			uiInstrumentSettingsOn("D:", D_init, D_offSec, D_offMin, D_offHour, D_onSec, D_onMin, D_onHour, D_out2, D_sec);
 
 		else if(uiPage==13) {
 			lcd.setCursor(0, 0);
@@ -1859,7 +1861,7 @@ void loop()
 		}
 
 		//force output to 0 before offset expired
-		bool A_out2, B_out2, C_out2, D_out2;
+
 		A_out2 = ((A_offsetSec <= secCnt ) || secOverflow) ? A_out : false;
 		B_out2 = ((B_offsetSec <= secCnt ) || secOverflow) ? B_out : false;
 		C_out2 = ((C_offsetSec <= secCnt ) || secOverflow) ? C_out : false;
