@@ -128,8 +128,6 @@ public:
 	}
 };
 
-Alarm co2LowAlarm;
-
 class Keypad_I2C2 : public Keypad_I2C {
 	unsigned long kTime;
 public:
@@ -917,12 +915,12 @@ void uiMain() {
 
 	Menu.enable(false);
 
-	if(co2LowAlarm.unAck) {
-		(secCnt & 1) ? lcd.backlight() : lcd.noBacklight();
-	}
-	else {
-		lcd.backlight();
-	}
+	//if(co2LowAlarm.unAck) {
+	//	(secCnt & 1) ? lcd.backlight() : lcd.noBacklight();
+	//}
+	//else {
+	//	lcd.backlight();
+	//}
 
 	if(uiState == UISTATE_MAIN) {
 
@@ -1191,7 +1189,7 @@ void saveSetting3() {
 	A_mode = 0;
 	A_state = 1;
 	A_init = false;
-	A_cyclesLimit = 1500;
+	A_cyclesLimit = 5;
 	A_onSec = 6;
 	A_offSec = 18;
 	A_offsetSec = 0;
@@ -1201,7 +1199,7 @@ void saveSetting3() {
 	B_mode = 0;
 	B_state = 1;
 	B_init = true;
-	B_cyclesLimit = 1500;
+	B_cyclesLimit = 5;
 	B_onSec = 6;
 	B_offSec = 18;
 	B_offsetSec = 6;
@@ -1211,7 +1209,7 @@ void saveSetting3() {
 	C_mode = 0;
 	C_state = 1;
 	C_init = false;
-	C_cyclesLimit = 1500;
+	C_cyclesLimit = 5;
 	C_onSec = C_offSec = 12;
 	C_onHour = C_onMin = C_offHour = C_offMin = 0;
 	C_offsetSec= 6;
@@ -1220,7 +1218,7 @@ void saveSetting3() {
 	D_mode = 0;
 	D_state = 1;
 	D_init = true;
-	D_cyclesLimit = 1500;
+	D_cyclesLimit = 5;
 	D_onSec = D_offSec = 12;
 	D_onHour = D_onMin = D_offHour = D_offMin = 0;
 	D_offsetSec = 6;
@@ -1716,9 +1714,9 @@ void loop()
 	//char key = kpd.getKey();
 	//char ch = kpd.getRawKey();
 	char ch = kpd.getKey2();
-	if(ch) {
-		co2LowAlarm.ack();
-	}
+	//if(ch) {
+	//	co2LowAlarm.ack();
+	//}
 
 	if(ch == '*') {//KPD_ENTER)
 		//if(!uiState)
@@ -1751,17 +1749,17 @@ void loop()
 	if (secInterval.expired()) {
 		secInterval.set(1000);
 
-
+		Serial.println(secCnt);
 
 
 		if(X_state) {
 			//running
 
 			// A
-			if(((A_halfCycles >> 1) >= A_cyclesLimit) && A_cyclesLimit) {
-				A_state = 0;
-				A_out = false;
-			}
+			//if(((A_halfCycles >> 1) >= A_cyclesLimit) && A_cyclesLimit) {
+			//	A_state = 0;
+			//	A_out = false;
+			//}
 			if(A_state && ((A_offsetSec <= secCnt ) || secOverflow)) { //??? secOverflow
 			//if(A_state) { // && !A_mode
 				if(A_out)
@@ -1775,12 +1773,16 @@ void loop()
 				}
 				A_sec++;
 			}
+			if(((A_halfCycles >> 1) >= A_cyclesLimit) && A_cyclesLimit) {
+				A_state = 0;
+				A_out = false;
+			}
 
 			// B
-			if(((B_halfCycles >> 1) >= B_cyclesLimit) && B_cyclesLimit) {
-				B_state = 0;
-				B_out = false;
-			}
+			//if(((B_halfCycles >> 1) >= B_cyclesLimit) && B_cyclesLimit) {
+			//	B_state = 0;
+			//	B_out = false;
+			//}
 			if(B_state && ((B_offsetSec <= secCnt ) || secOverflow)) {
 			//if(B_state) { // && !B_mode
 				if(B_out)
@@ -1794,12 +1796,17 @@ void loop()
 				}
 				B_sec++;
 			}
+			if(((B_halfCycles >> 1) >= B_cyclesLimit) && B_cyclesLimit) {
+							B_state = 0;
+							B_out = false;
+			}
+
 
 			// C
-			if(((C_halfCycles >> 1) >= C_cyclesLimit) && C_cyclesLimit) {
-				C_state = 0;
-				C_out = false;
-			}
+			//if(((C_halfCycles >> 1) >= C_cyclesLimit) && C_cyclesLimit) {
+			//	C_state = 0;
+			//	C_out = false;
+			//}
 			if(C_state && ((C_offsetSec <= secCnt ) || secOverflow)) {
 			//if(C_state) { // && !C_mode
 				if(C_out)
@@ -1813,12 +1820,16 @@ void loop()
 				}
 				C_sec++;
 			}
+			if(((C_halfCycles >> 1) >= C_cyclesLimit) && C_cyclesLimit) {
+				C_state = 0;
+				C_out = false;
+			}
 
 			// D
-			if(((D_halfCycles >> 1) >= D_cyclesLimit) && D_cyclesLimit) {
-				D_state = 0;
-				D_out = false;
-			}
+			//if(((D_halfCycles >> 1) >= D_cyclesLimit) && D_cyclesLimit) {
+			//	D_state = 0;
+			//	D_out = false;
+			//}
 			if(D_state && ((D_offsetSec <= secCnt ) || secOverflow)) {
 			//if(D_state) { // && !D_mode
 				if(D_out)
@@ -1832,22 +1843,34 @@ void loop()
 				}
 				D_sec++;
 			}
+			if(((D_halfCycles >> 1) >= D_cyclesLimit) && D_cyclesLimit) {
+				D_state = 0;
+				D_out = false;
+			}
 
 
 
 
+
+
+			secCnt++;
+			if(!secCnt)
+				secOverflow = true;
 		}
 
-		secCnt++;
-		if(!secCnt)
-			secOverflow = true;
+		//force output to 0 before offset expired
+		bool A_out2, B_out2, C_out2, D_out2;
+		A_out2 = ((A_offsetSec <= secCnt ) || secOverflow) ? A_out : false;
+		B_out2 = ((B_offsetSec <= secCnt ) || secOverflow) ? B_out : false;
+		C_out2 = ((C_offsetSec <= secCnt ) || secOverflow) ? C_out : false;
+		D_out2 = ((D_offsetSec <= secCnt ) || secOverflow) ? D_out : false;
 
 		digitalWrite(PIN_LED, A_outPin);
 
-		A_outPin = getInstrumentControl(A_out, A_mode);
-		B_outPin = getInstrumentControl(B_out, B_mode);
-		C_outPin = getInstrumentControl(C_out, C_mode);
-		D_outPin = getInstrumentControl(D_out, D_mode);
+		A_outPin = getInstrumentControl(A_out2, A_mode);
+		B_outPin = getInstrumentControl(B_out2, B_mode);
+		C_outPin = getInstrumentControl(C_out2, C_mode);
+		D_outPin = getInstrumentControl(D_out2, D_mode);
 
 		digitalWrite(PIN_A, !A_outPin);
 		digitalWrite(PIN_B, !B_outPin);
